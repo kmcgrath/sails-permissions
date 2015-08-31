@@ -34,7 +34,18 @@ module.exports = function(req, res, next) {
     var checkPermissions = req.options.action === 'populate' ? req.populatePermissions : req.permissions;
 
     // get all of the where clauses and blacklists into one flat array
-    var criteria = _.compact(_.flatten(_.pluck(checkPermissions, 'criteria')));
+    // if a permission has no criteria then it is always true
+    var criteria = _.compact(_.flatten(
+      _.map(
+        _.pluck(permissions, 'criteria'),
+        function(c) {
+          if (c.length == 0) {
+            return [{where: {}}];
+          }
+          return c;
+        }
+      )
+    ));
 
     if (criteria.length) {
       bindResponsePolicy(req, res, criteria);
